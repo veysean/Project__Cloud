@@ -53,6 +53,11 @@ cloud-project/
 ├── variables.tf       # Input variables (reusable values)
 ├── outputs.tf         # Output values (e.g., public DNS)
 │
+├── modules/           # Reusable infrastructure components
+│   ├── ec2.tf         # Configures EC2 instances, ASG, and Load Balancer
+│   ├── rds.tf         # Provisions the managed relational database
+│   └── vpc.tf         # Defines networking, subnets, and routing
+│
 ├── app/               # Web application source code
 │   ├── index.js       # Main application file (Node.js example)
 │   └── package.json   # Dependencies for the app

@@ -52,6 +52,7 @@ resource "aws_autoscaling_group" "app_asg" {
     id      = aws_launch_template.app_tpl.id
     version = "$Latest"
   }
+  target_group_arns = [aws_lb_target_group.app_tg.arn]
 
   # This ensures every instance created by the ASG gets a tag
   tag {

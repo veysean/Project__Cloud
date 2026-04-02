@@ -1,0 +1,13 @@
+# Local setup folders
+.terraform/
+
+# Distributed lock file (Safe to ignore for student projects)
+.terraform.lock.hcl
+
+# THE MOST IMPORTANT: State files (Security Risk)
+*.tfstate
+*.tfstate.backup
+
+# Variable files (If they contain real passwords)
+*.tfvars
+*.tfvars.json

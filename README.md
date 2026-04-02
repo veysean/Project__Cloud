@@ -45,26 +45,28 @@ User → Load Balancer → EC2 Instances (Auto Scaling)
 ## 📁 Project Structure
 
 ```
-cloud-project/
+project__cloud/
 │
-├── provider.tf        # Defines Terraform and AWS provider configuration
-├── main.tf            # Core infrastructure (EC2, S3, etc.)
-├── security.tf        # Security groups and IAM roles
-├── variables.tf       # Input variables (reusable values)
-├── outputs.tf         # Output values (e.g., public DNS)
+├── provider.tf         # AWS and Terraform version configurations
+├── main.tf             # Root "Bridge": Connects the user inputs to the modules
+├── variables.tf        # Root "Inputs": Where you set your actual values and defaults
+├── outputs.tf          # Root "Display": Prints the final IPs and URLs to your screen
 │
-├── modules/           # Reusable infrastructure components
-│   ├── ec2.tf         # Configures EC2 instances, ASG, and Load Balancer
-│   ├── rds.tf         # Provisions the managed relational database
-│   └── vpc.tf         # Defines networking, subnets, and routing
+├── modules/            # Reusable Infrastructure Logic
+│   ├── vpc.tf          # Networking (VPC, Subnets, Routing)
+│   ├── rds.tf          # Database (Private RDS instance)
+│   ├── ec2.tf          # Compute (App Server)
+│   ├── security.tf     # Firewalls (Web and DB Security Groups)
+│   ├── variables.tf    # Module "Inputs": The variables the module expects
+│   └── outputs.tf      # Module "Outputs": The data the module shares back
 │
-├── app/               # Web application source code
-│   ├── index.js       # Main application file (Node.js example)
-│   └── package.json   # Dependencies for the app
+├── app/                # Web application source code
+│   ├── index.js        # Main application file (Node.js example)
+│   └── package.json    # Dependencies for the app
 │
 ├── scripts/
-│   └── install.sh     # Script to configure EC2 and run the app
+│   └── install.sh      # Script to configure EC2 and run the app
 │
-├── README.md          # Project documentation
+├── README.md           # Project documentation
 ```
 

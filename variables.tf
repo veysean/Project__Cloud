@@ -1,19 +1,24 @@
-variable "instance_type" {
-  description = "EC2 instance type"
-  default     = "t2.micro"
-}
 variable "aws_region" {
-  description = "AWS region to deploy resources"
+  description = "The region where we build our project"
+  type        = string
   default     = "ap-southeast-1"
 }
 
 variable "project_name" {
-  description = "Name prefix for resources"
+  description = "The name of our cloud project"
+  type        = string
   default     = "project-cloud"
 }
 
-variable "db_password" {
-  description = "4/7TeamB"
+variable "instance_type" {
+  description = "The size of our server"
   type        = string
-  sensitive   = true 
+  default     = "t2.micro"
+}
+
+variable "db_password" {
+  description = "Database password"
+  type        = string
+  sensitive   = true
+  default     = "4/7TeamB" 
 }

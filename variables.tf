@@ -13,12 +13,12 @@ variable "project_name" {
 variable "instance_type" {
   description = "The size of our server"
   type        = string
-  default     = "t2.micro"
+  default     = "t3.micro"
 }
 
 variable "db_password" {
   description = "Database password"
   type        = string
   sensitive   = true
-  default     = "4/7TeamB" 
+  default     = "47TeamBCloud!" 
 }

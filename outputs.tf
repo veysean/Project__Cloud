@@ -1,5 +1,5 @@
-output "web_instance_public_ip" {
-  value = module.app_infrastructure.instance_public_ip 
+output "app_asg_name" {
+  value = module.app_infrastructure.asg_name
 }
 
 output "rds_endpoint" {

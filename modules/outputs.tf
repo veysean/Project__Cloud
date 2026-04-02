@@ -1,5 +1,5 @@
-output "instance_public_ip" {
-  value = aws_instance.app_server.public_ip
+output "asg_name" {
+  value = aws_autoscaling_group.app_asg.name
 }
 
 output "rds_endpoint" {

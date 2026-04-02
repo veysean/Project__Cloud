@@ -11,3 +11,9 @@ variable "project_name" {
   description = "Name prefix for resources"
   default     = "project-cloud"
 }
+
+variable "db_password" {
+  description = "4/7TeamB"
+  type        = string
+  sensitive   = true 
+}

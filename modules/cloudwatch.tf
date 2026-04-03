@@ -14,3 +14,8 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
     AutoScalingGroupName = aws_autoscaling_group.app_asg.name
   }
 }
+
+resource "aws_cloudwatch_log_group" "app_logs" {
+  name              = "/aws/ec2/${var.project_name}"
+  retention_in_days = 7
+}

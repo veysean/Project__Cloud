@@ -11,3 +11,12 @@
 # Variable files (If they contain real passwords)
 *.tfvars
 *.tfvars.json
+
+# --- SSH & Security ---
+# Specifically ignore your old and new keys
+my-cloud-key
+my-cloud-key.pub
+my-cloud-v2
+my-cloud-v2.pub
+*.pem
+*.pub

@@ -59,6 +59,7 @@ project__cloud/
 │   ├── security.tf     # Firewalls (Web and DB Security Groups)
 │   ├── variables.tf    # Module "Inputs": The variables the module expects
 │   └── outputs.tf      # Module "Outputs": The data the module shares back
+│   └── cloudwatch.tf   # Monitoring and alarm configuration
 │
 ├── app/                # Web application source code
 │   ├── index.js        # Main application file (Node.js example)

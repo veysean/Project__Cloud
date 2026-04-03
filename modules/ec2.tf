@@ -28,9 +28,11 @@ resource "aws_launch_template" "app_tpl" {
   user_data = base64encode(<<-EOF
               #!/bin/bash
               apt-get update -y
-              apt-get install -y apache2 awscli
+              apt-get install -y apache2 awscli amazon-cloudwatch-agent
+
               systemctl start apache2
               systemctl enable apache2
+
               echo "Hello from Scalable Ubuntu EC2 with IAM!" > /var/www/html/index.html
               EOF
   )
@@ -97,5 +99,11 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 resource "aws_key_pair" "deployer" {
   key_name   = "${var.project_name}-ssh-key"
   public_key = file("${path.root}/my-cloud-key.pub")
+}
+
+# Attach CloudWatch policy to IAM role
+resource "aws_iam_role_policy_attachment" "cloudwatch_logs" {
+  role       = aws_iam_role.ec2_s3_access_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 

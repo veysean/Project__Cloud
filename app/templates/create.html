@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Task - Student Task Manager{% endblock %}
+
+{% block header_actions %}
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Tasks</a>
+{% endblock %}
+
+{% block content %}
+    <form action="{{ url_for('create_task') }}" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Task Title</label>
+            <input type="text" id="title" name="title" required placeholder="What needs to be done?">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description (Optional)</label>
+            <textarea id="description" name="description" placeholder="Add more details about this task..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="attachment">Upload Attachment (Optional)</label>
+            <input type="file" id="attachment" name="attachment">
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%;">Create Task</button>
+    </form>
+{% endblock %}

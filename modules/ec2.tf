@@ -62,19 +62,22 @@ resource "aws_launch_template" "app_tpl" {
 #   1) Install Node.js 20 + npm
 #   2) Install package.json dependencies
 #   3) Run init_db.js
-#   4) Start server.js on 0.0.0.0:8080 (via systemd)
+#   4) Start server.js on 0.0.0.0:3000 (via systemd)
+# Version bump to fix init_db hang
 set -euo pipefail
 
 APP_DIR=/home/ubuntu/app
 
 apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y wget ca-certificates curl unzip awscli postgresql-client
+DEBIAN_FRONTEND=noninteractive apt-get install -y wget ca-certificates curl unzip postgresql-client
 
-# SSM Agent
-wget -qO /tmp/amazon-ssm-agent.deb "https://amazon-ssm-${var.aws_region}.s3.${var.aws_region}.amazonaws.com/latest/debian_amd64/amazon-ssm-agent.deb"
-dpkg -i /tmp/amazon-ssm-agent.deb || apt-get install -f -y
-systemctl enable amazon-ssm-agent
-systemctl start amazon-ssm-agent || true
+# Install AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip -q awscliv2.zip
+./aws/install
+rm -rf aws awscliv2.zip
+
+# SSM Agent is pre-installed via snap on Ubuntu 24.04 AMIs
 
 if command -v ufw >/dev/null 2>&1; then
   DEBIAN_FRONTEND=noninteractive ufw --force disable || true

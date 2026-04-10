@@ -202,8 +202,10 @@ app.post('/delete/:taskId', async (req, res) => {
 });
 
 const PORT = 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server listening on port ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server listening on port ${PORT}`);
+    });
+}
 
 module.exports = { sequelize, Task };

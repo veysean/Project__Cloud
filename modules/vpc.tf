@@ -64,47 +64,14 @@ resource "aws_route_table_association" "public_assoc_b" {
   route_table_id = aws_route_table.public_rt.id
 }
 
-# NAT Gateways for Private Subnet Outbound Access
-resource "aws_eip" "nat_a" {
-  domain = "vpc"
-  tags   = { Name = "${var.project_name}-nat-a-eip" }
-}
-
-resource "aws_eip" "nat_b" {
-  domain = "vpc"
-  tags   = { Name = "${var.project_name}-nat-b-eip" }
-}
-
-resource "aws_nat_gateway" "nat_a" {
-  allocation_id = aws_eip.nat_a.id
-  subnet_id     = aws_subnet.public_a.id
-  tags          = { Name = "${var.project_name}-nat-a" }
-  depends_on    = [aws_internet_gateway.igw]
-}
-
-resource "aws_nat_gateway" "nat_b" {
-  allocation_id = aws_eip.nat_b.id
-  subnet_id     = aws_subnet.public_b.id
-  tags          = { Name = "${var.project_name}-nat-b" }
-  depends_on    = [aws_internet_gateway.igw]
-}
-
-# Private Route Tables mapping to NAT Gateways
+# Private Route Tables
 resource "aws_route_table" "private_rt_a" {
   vpc_id = aws_vpc.main.id
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat_a.id
-  }
   tags = { Name = "${var.project_name}-private-rt-a" }
 }
 
 resource "aws_route_table" "private_rt_b" {
   vpc_id = aws_vpc.main.id
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat_b.id
-  }
   tags = { Name = "${var.project_name}-private-rt-b" }
 }
 

@@ -1,0 +1,23 @@
+{
+  "name": "student-task-manager",
+  "version": "1.0.0",
+  "description": "Student Task Manager Backend (Node.js)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "init-db": "node init_db.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.550.0",
+    "@aws-sdk/s3-request-presigner": "^3.550.0",
+    "connect-flash": "^0.1.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.19.0",
+    "multer": "^1.4.5-lts.1",
+    "nunjucks": "^3.2.4",
+    "pg": "^8.11.5",
+    "sequelize": "^6.37.3",
+    "uuid": "^9.0.1"
+  }
+}

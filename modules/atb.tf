@@ -19,7 +19,7 @@ resource "aws_lb" "app_alb" {
 # when port/protocol changes (ResourceInUse: target group in use by a listener).
 resource "aws_lb_target_group" "app_tg" {
   name_prefix = substr(md5(var.project_name), 0, 6)
-  port        = 8080
+  port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
 

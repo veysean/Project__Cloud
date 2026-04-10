@@ -22,10 +22,10 @@ resource "aws_security_group" "web_sg" {
   vpc_id = aws_vpc.main.id
   name   = "${var.project_name}-web-sg"
 
-  # App port (not 5000: some Ubuntu images reserve 5000 for snap services — ALB health checks hit this port)
+  # App port
   ingress {
-    from_port       = 8080
-    to_port         = 8080
+    from_port       = 3000
+    to_port         = 3000
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
   }

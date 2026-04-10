@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Manage your tasks dynamically and efficiently.">
     <title>{% block title %}Student Task Manager{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
     <div class="container">
@@ -14,15 +14,14 @@
             {% block header_actions %}{% endblock %}
         </header>
 
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            <ul class="flashes" style="margin-bottom: 20px; color: var(--success); list-style: none;">
-            {% for message in messages %}
-              <li>{{ message }}</li>
-            {% endfor %}
-            </ul>
-          {% endif %}
-        {% endwith %}
+        {% set messages = get_flashed_messages() %}
+        {% if messages and messages.length > 0 %}
+          <ul class="flashes" style="margin-bottom: 20px; color: var(--success); list-style: none;">
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
 
         <main>
             {% block content %}{% endblock %}

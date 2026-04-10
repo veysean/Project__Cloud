@@ -36,9 +36,6 @@ The frontend is modeled using high aesthetic standards featuring **Glassmorphism
 | **Secrets Manager** | Stores auto-generated DB credentials securely |
 | **CloudWatch Alarms** | Fires scale-up/down policies based on CPU; monitors ALB 5xx and RDS CPU |
 
-## Project Structure
-
-
 ## Deployment Steps
 
 1. **Clone the Repo:**

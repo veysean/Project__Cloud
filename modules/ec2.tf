@@ -50,7 +50,7 @@ resource "aws_launch_template" "app_tpl" {
 
   network_interfaces {
     device_index                = 0
-    associate_public_ip_address = false
+    associate_public_ip_address = true
     security_groups             = [aws_security_group.web_sg.id]
   }
 
@@ -58,19 +58,19 @@ resource "aws_launch_template" "app_tpl" {
 
   user_data = base64encode(<<-EOF
 #!/bin/bash
-# ASG bootstrap (aligns with rubric):
-#   1) Install Python + pip
-#   2) Install requirements.txt
-#   3) Run init_db.py
-#   4) Start Gunicorn on 0.0.0.0:8080 (via systemd — preferred over gunicorn --daemon)
+# ASG bootstrap:
+#   1) Install Node.js 20 + npm
+#   2) Install package.json dependencies
+#   3) Run init_db.js
+#   4) Start server.js on 0.0.0.0:8080 (via systemd)
 set -euo pipefail
 
 APP_DIR=/home/ubuntu/app
 
 apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y wget ca-certificates
+DEBIAN_FRONTEND=noninteractive apt-get install -y wget ca-certificates curl unzip awscli postgresql-client
 
-# SSM Agent (Session Manager for private subnets)
+# SSM Agent
 wget -qO /tmp/amazon-ssm-agent.deb "https://amazon-ssm-${var.aws_region}.s3.${var.aws_region}.amazonaws.com/latest/debian_amd64/amazon-ssm-agent.deb"
 dpkg -i /tmp/amazon-ssm-agent.deb || apt-get install -f -y
 systemctl enable amazon-ssm-agent
@@ -80,17 +80,18 @@ if command -v ufw >/dev/null 2>&1; then
   DEBIAN_FRONTEND=noninteractive ufw --force disable || true
 fi
 
-# 1) Python + pip (system python3-pip + venv; app deps installed with venv pip)
-DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-pip python3-venv unzip awscli postgresql-client curl
+# 1) Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+DEBIAN_FRONTEND=noninteractive apt-get install -y nodejs
 
 mkdir -p "$APP_DIR"
 chown ubuntu:ubuntu "$APP_DIR"
 
-# App artifact from Terraform-managed deploy bucket (same idea as "cd …/app" in the handout)
+# App artifact
 sudo -u ubuntu -H bash -c "cd '$APP_DIR' && aws s3 cp s3://${aws_s3_bucket.deploy.bucket}/app.zip . && unzip -o app.zip"
 
-# 2) Virtualenv + requirements (equivalent to: pip3 install -r requirements.txt)
-sudo -u ubuntu -H bash -c "cd '$APP_DIR' && python3 -m venv venv && ./venv/bin/pip install --no-cache-dir --upgrade pip && ./venv/bin/pip install --no-cache-dir -r requirements.txt"
+# 2) NPM Install
+sudo -u ubuntu -H bash -c "cd '$APP_DIR' && npm install"
 
 echo '${local.app_runtime_config_b64}' | base64 -d > "$APP_DIR/app_config.json"
 chmod 600 "$APP_DIR/app_config.json"
@@ -101,13 +102,13 @@ until pg_isready -h ${aws_db_instance.app_db.address} -p 5432 -U ${aws_db_instan
   sleep 10
 done
 
-# 3) init_db.py
-sudo -u ubuntu -H bash -c "cd '$APP_DIR' && ./venv/bin/python init_db.py"
+# 3) init_db.js
+sudo -u ubuntu -H bash -c "cd '$APP_DIR' && node init_db.js"
 
-# 4) Gunicorn on :8080 (quoted heredoc: Terraform must not eat $APP_DIR; paths must be literal for systemd)
+# 4) Node.js on :3000 (systemd)
 cat <<'SERVICE' > /etc/systemd/system/app.service
 [Unit]
-Description=Gunicorn Flask app (port 8080)
+Description=Node.js Express app (port 3000)
 After=network-online.target
 Wants=network-online.target
 
@@ -116,8 +117,8 @@ Type=simple
 User=ubuntu
 Group=ubuntu
 WorkingDirectory=/home/ubuntu/app
-Environment=PATH=/home/ubuntu/app/venv/bin
-ExecStart=/home/ubuntu/app/venv/bin/gunicorn --workers 1 --bind 0.0.0.0:8080 --timeout 120 --keep-alive 5 --access-logfile - --error-logfile - app:app
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=10
 
@@ -130,14 +131,14 @@ systemctl enable app
 systemctl start app
 
 for attempt in $(seq 1 60); do
-  if curl -sfS --max-time 5 http://127.0.0.1:8080/health >/dev/null; then
-    echo "ALB health path OK: GET /health on :8080 (attempt $attempt)"
+  if curl -sfS --max-time 5 http://127.0.0.1:3000/health >/dev/null; then
+    echo "ALB health path OK: GET /health on :3000 (attempt $attempt)"
     exit 0
   fi
   sleep 5
 done
 
-echo "Gunicorn did not serve /health on 8080 — diagnostics:"
+echo "Node.js did not serve /health on 3000 — diagnostics:"
 systemctl status app --no-pager || true
 journalctl -u app -n 120 --no-pager || true
 ss -tlnp || true
@@ -163,8 +164,8 @@ resource "aws_autoscaling_group" "app_asg" {
   # routes only to targets that pass its own health checks (503 until at least one is healthy).
   health_check_grace_period = 900
 
-  # Launch instances in PRIVATE subnets
-  vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_b.id]
+  # Launch instances in PUBLIC subnets
+  vpc_zone_identifier = [aws_subnet.public_a.id, aws_subnet.public_b.id]
 
   launch_template {
     id      = aws_launch_template.app_tpl.id

@@ -1,22 +1,28 @@
-# Local setup folders
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+.env
+
+# Terraform
 .terraform/
-
-# Distributed lock file (Safe to ignore for student projects)
 .terraform.lock.hcl
-
-# THE MOST IMPORTANT: State files (Security Risk)
 *.tfstate
 *.tfstate.backup
+tfplan
+terraform.tfvars
 
-# Variable files (If they contain real passwords)
-*.tfvars
-*.tfvars.json
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
 
-# --- SSH & Security ---
-# Specifically ignore your old and new keys
-my-cloud-key
-my-cloud-key.pub
-my-cloud-v2
-my-cloud-v2.pub
+# Project
+app.zip
 *.pem
-*.pub
+.terraform.tfstate.lock.info

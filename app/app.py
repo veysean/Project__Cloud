@@ -1,11 +1,21 @@
+import json
 import os
 import uuid
-from flask import Flask, render_template, request, redirect, url_for, flash
+from urllib.parse import quote_plus
+
+from flask import Flask, render_template, request, redirect, url_for, flash, Response
 from flask_sqlalchemy import SQLAlchemy
 import boto3
 from dotenv import load_dotenv
 
-load_dotenv()
+_config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_config.json")
+if os.path.isfile(_config_path):
+    with open(_config_path, encoding="utf-8") as f:
+        for _k, _v in json.load(f).items():
+            if _v is not None:
+                os.environ[str(_k)] = str(_v)
+else:
+    load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -14,9 +24,20 @@ DB_USER = os.getenv('DB_USER', 'dbadmin')
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'testpass')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_NAME = os.getenv('DB_NAME', 'projectdb')
+DB_SSLMODE = os.getenv('DB_SSLMODE', 'prefer')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+_user = quote_plus(DB_USER)
+_password = quote_plus(DB_PASSWORD)
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    f"postgresql+psycopg2://{_user}:{_password}@{DB_HOST}:5432/{DB_NAME}"
+    f"?sslmode={DB_SSLMODE}"
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 280,
+    'connect_args': {'connect_timeout': 15},
+}
 
 db = SQLAlchemy(app)
 
@@ -31,8 +52,6 @@ class Task(db.Model):
     attachment_url = db.Column(db.String(500), nullable=True)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-with app.app_context():
-    db.create_all()
 
 @app.route('/')
 def index():
@@ -63,7 +82,8 @@ def index():
 
 @app.route('/health')
 def health():
-    return {'status': 'ok'}, 200
+    # Plain 200 body — avoids any JSON/content-type edge cases with the ALB matcher.
+    return Response('ok', mimetype='text/plain')
 
 @app.route('/create', methods=['GET', 'POST'])
 def create_task():
@@ -98,4 +118,4 @@ def delete_task(task_id):
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=8080)

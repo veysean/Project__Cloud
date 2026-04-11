@@ -8,7 +8,7 @@ const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = re
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { v4: uuidv4 } = require('uuid');
 
-// Load config
+// Load config into process.env
 const configPath = path.join(__dirname, 'app_config.json');
 if (fs.existsSync(configPath)) {
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
@@ -32,7 +32,7 @@ nunjucks.configure('templates', {
 });
 app.set('view engine', 'html');
 
-// Create Flash logic middleware (Express doesn't have it built-in)
+// Flash middleware
 app.use(require('express-session')({ secret: process.env.SECRET_KEY || 'dev-secret-key', resave: false, saveUninitialized: false }));
 const flash = require('connect-flash');
 app.use(flash());
@@ -44,56 +44,59 @@ app.use((req, res, next) => {
     next();
 });
 
-// Database Setup
-const DB_USER = process.env.DB_USER || 'dbadmin';
-const DB_PASSWORD = process.env.DB_PASSWORD || 'testpass';
-const DB_HOST = process.env.DB_HOST || 'localhost';
-const DB_NAME = process.env.DB_NAME || 'projectdb';
-const DB_SSLMODE = process.env.DB_SSLMODE || 'prefer';
-
-const dialectOptions = DB_SSLMODE === 'require' ? { ssl: { require: true, rejectUnauthorized: false } } : {};
-
-const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
-    host: DB_HOST,
+// Sequelize setup
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
     dialect: 'postgres',
-    dialectOptions: dialectOptions,
-    logging: false,
-    pool: {
-        max: 5,
-        min: 0,
-        acquire: 15000,
-        idle: 10000
-    }
+    dialectOptions: {
+      ssl: { require: true, rejectUnauthorized: false }
+    },
+    logging: console.log
+  }
+);
+
+// Define Task model
+const Task = sequelize.define('Task', {
+  title: { type: DataTypes.STRING(100), allowNull: false },
+  description: { type: DataTypes.TEXT },
+  attachment_url: { type: DataTypes.STRING(500) },
+  created_at: { type: DataTypes.DATE, defaultValue: Sequelize.NOW }
+}, { timestamps: false, tableName: 'task' });
+
+// Connect and sync DB
+sequelize.authenticate()
+  .then(() => {
+    console.log("Database connection established successfully.");
+    return sequelize.sync();
+  })
+  .then(() => {
+    console.log("Models synchronized with database.");
+  })
+  .catch(err => {
+    console.error("Unable to connect to the database:", err);
+  });
+
+// Express routes
+app.get('/health', (req, res) => res.send('ok'));
+
+const PORT = 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on port ${PORT}`);
 });
 
-const Task = sequelize.define('Task', {
-    title: {
-        type: DataTypes.STRING(100),
-        allowNull: false
-    },
-    description: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    },
-    attachment_url: {
-        type: DataTypes.STRING(500),
-        allowNull: true
-    },
-    created_at: {
-        type: DataTypes.DATE,
-        defaultValue: Sequelize.NOW
-    }
-}, {
-    timestamps: false,
-    tableName: 'task'
-});
+module.exports = { sequelize, Task };
 
 // S3 configure
-const ATTACHMENTS_BUCKET = process.env.ATTACHMENTS_BUCKET || 'test-bucket';
-const AWS_REGION = process.env.AWS_REGION || 'ap-southeast-1';
+const ATTACHMENTS_BUCKET = process.env.ATTACHMENTS_BUCKET;
+const AWS_REGION = process.env.AWS_REGION;
 const s3Client = new S3Client({ region: AWS_REGION });
 
-// Multer setup for memory storage (we'll stream to S3)
+// Multer setup
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Routes
@@ -201,7 +204,6 @@ app.post('/delete/:taskId', async (req, res) => {
     }
 });
 
-const PORT = 3000;
 if (require.main === module) {
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`Server listening on port ${PORT}`);

@@ -163,12 +163,10 @@ resource "aws_autoscaling_group" "app_asg" {
   max_size         = 4
   min_size         = 1
 
-  # Delays *Auto Scaling* from replacing instances that fail ELB checks; the ALB still
-  # routes only to targets that pass its own health checks (503 until at least one is healthy).
   health_check_grace_period = 900
 
-  # Launch instances in PUBLIC subnets
-  vpc_zone_identifier = [aws_subnet.public_a.id, aws_subnet.public_b.id]
+  # Launch instances in PRIVATE subnets
+  vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_b.id]
 
   launch_template {
     id      = aws_launch_template.app_tpl.id
@@ -176,8 +174,6 @@ resource "aws_autoscaling_group" "app_asg" {
   }
   target_group_arns = [aws_lb_target_group.app_tg.arn]
 
-  # Keep at least one healthy target behind the ALB during template/AMI refreshes.
-  # min_healthy_percentage = 0 can deregister all targets at once → HTTP 503.
   instance_refresh {
     strategy = "Rolling"
     preferences {
